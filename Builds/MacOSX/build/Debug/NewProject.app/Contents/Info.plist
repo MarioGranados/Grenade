@@ -5,13 +5,13 @@
 	<key>BuildMachineOSBuild</key>
 	<string>23E224</string>
 	<key>CFBundleDisplayName</key>
-	<string>FM_Synth</string>
+	<string>Grenade</string>
 	<key>CFBundleExecutable</key>
 	<string>NewProject</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.yourcompany.FM_Synth</string>
+	<string>com.yourcompany.Grenade</string>
 	<key>CFBundleName</key>
-	<string>FM_Synth</string>
+	<string>Grenade</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

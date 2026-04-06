@@ -14,6 +14,73 @@ modPhaseDelta(0.0f)
     // Make sure you set the size of the component after
     // you add any child components.
     setSize (800, 600);
+    //===========================
+    
+    addAndMakeVisible(volumeKnob);
+    volumeKnob.setSliderStyle(juce::Slider::LinearVertical);
+    volumeKnob.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
+    volumeKnob.setRange(0.0, 100, 1.0);
+    volumeKnob.setValue(80);
+    volumeKnob.onValueChange = [this](){
+        handleVolumeChange(volumeKnob.getValue());
+    };
+    
+    addAndMakeVisible(voicesAmountSlider);
+    voicesAmountSlider.setSliderStyle(juce::Slider::LinearVertical);
+    voicesAmountSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
+    voicesAmountSlider.setRange(1.0, 18, 1.0);
+    voicesAmountSlider.setValue(1);
+    voicesAmountSlider.onValueChange = [this]() {
+        handleVoicesAmount(voicesAmountSlider.getValue());
+    };
+    //============================
+    
+    addAndMakeVisible(toggleButton);
+    toggleButton.setButtonText("Click Me!");
+    toggleButton.onClick = [this](){
+        DBG("Clicked!");
+    };
+    
+    addAndMakeVisible(knob);
+    knob.setSliderStyle(juce::Slider::Rotary);
+    knob.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
+    
+    knob.setRange(0.0, 100.0, 1.0);
+    knob.setValue(50);
+    
+    knob.onValueChange = [this](){
+        float value = knob.getValue();
+        DBG("Knob value: " << value);
+    };
+    
+    addAndMakeVisible(slider);
+    slider.setSliderStyle(juce::Slider::LinearHorizontal);
+    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 69, 20);
+    slider.setRange(0.0, 100, 1.0);
+    slider.setValue(0);
+    
+    slider.onValueChange = [this]()
+    {
+        float value = slider.getValue();
+        DBG("Slider value: " << value);
+    };
+    
+    addAndMakeVisible(dropdown);
+    
+    // add items (id must be unique)
+    dropdown.addItem("Sine", 1);
+    dropdown.addItem("Square", 2);
+    dropdown.addItem("Saw", 3);
+
+    // default selection
+    dropdown.setSelectedId(1);
+    
+    dropdown.onChange = [this]()
+    {
+        int selected = dropdown.getSelectedId();
+
+        DBG("Selected ID: " << selected);
+    };
 
     // Some platforms require permissions to open input channels so request that here
     if (juce::RuntimePermissions::isRequired (juce::RuntimePermissions::recordAudio)
@@ -39,6 +106,7 @@ MainComponent::~MainComponent()
 void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
     currentSampleRate = sampleRate;
+    manager.setNumVoices(1);
     phaseDelta = (2.0f * juce::MathConstants<float>::pi * frequency) / currentSampleRate;
     modPhaseDelta = (2.0f * juce::MathConstants<float>::pi * modFrequency) / currentSampleRate;
 
@@ -87,8 +155,7 @@ void MainComponent::getNextAudioBlock (const juce::AudioSourceChannelInfo& buffe
 //                modPhase -= juce::MathConstants<float>::twoPi;
 //        }
 //    }
-    VoiceManager manager;
-    manager.setNumVoices(12);
+
     std::vector<Voice>& voices = manager.getVoices();
     
     for (int chan = 0; chan < bufferToFill.buffer->getNumChannels(); ++chan)
@@ -143,6 +210,19 @@ void MainComponent::paint (juce::Graphics& g)
 
 void MainComponent::resized()
 {
+    toggleButton.setBounds(30, 30, 150, 30);
+
+    slider.setBounds(30, 80, 300, 30);        // horizontal slider
+
+    knob.setBounds(30, 130, 100, 100);        // square knob
+
+    dropdown.setBounds(200, 30, 150, 30);
+
+    // vertical volume slider (make it tall)
+    volumeKnob.setBounds(350, 80, 50, 200);
+    
+    voicesAmountSlider.setBounds(250, 80, 50, 200);
+
     // This is called when the MainContentComponent is resized.
     // If you add any child components, this is where you should
     // update their positions.
@@ -151,3 +231,28 @@ void MainComponent::resized()
 
 //================================================my stuff
 //funciton here called in main component
+void MainComponent::handleKnobChange(float value) {
+    DBG("Value is: " << value);
+    DBG("current ampl: " << getAmplitude());
+    setAmplitude(value);
+}
+
+void MainComponent::handleVolumeChange(float value) {
+    float normalized = value / 100.0f;
+    setAmplitude(normalized);
+    DBG("Value is: " << value);
+}
+
+void MainComponent::handleVoicesAmount(float value) {
+    manager.setNumVoices((int)value);
+    DBG("Value is: " << value);
+}
+
+
+void MainComponent::setAmplitude(float value) {
+    amplitude = value;
+}
+
+float MainComponent::getAmplitude() {
+    return amplitude;
+}

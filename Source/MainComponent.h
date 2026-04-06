@@ -26,6 +26,7 @@ public:
     void resized() override;
     
     //====================================mystuff
+    
 
 private:
     //==============================================================================
@@ -41,7 +42,53 @@ private:
     float modPhaseDelta;
     
     VoiceManager manager;
-
+    
+    //examples
+    
+    juce::ToggleButton toggleButton;
+    juce::Slider slider;
+    juce::Slider knob;
+    //examples end
+    
+    //=======================main
+    juce::Slider attackKnob;
+    juce::Slider releaseKnob;
+    juce::Slider sustainKnob;
+    juce::Slider decayKnob;
+    juce::Slider volumeKnob;
+    //=======================main ends
+    
+    //===========FX
+    juce::Slider voicesAmountSlider;
+    
+    juce::Slider reverbDecayKnob;
+    juce::Slider reverbMixKnob;
+    juce::ToggleButton reverbButton;
+    
+    juce::Slider distortionKnob;
+    juce::ToggleButton distButton;
+    
+    juce::Slider chorusKnob;
+    juce::ToggleButton chorusButton; // enables fx;
+    
+    juce::ToggleButton pluckedButton;
+    //===============Fx end
+    
+    //========================second oscilator
+    
+    juce::ComboBox dropdown;
+    
+    
+    //=====functions
+    void handleKnobChange(float value);
+    void handleVolumeChange(float value);
+    
+    //====voices
+    void handleVoicesAmount(float value);
+    
+    float getAmplitude();
+    void setAmplitude(float amplitude);
+    
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

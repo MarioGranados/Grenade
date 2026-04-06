@@ -26,10 +26,3 @@ void VoiceManager::setNumVoices(int n)
     }
 }
 
-void VoiceManager::toggleVoices()
-{
-    if (voices.size() > 1)
-        setNumVoices(1);
-    else
-        setNumVoices(12);
-}
