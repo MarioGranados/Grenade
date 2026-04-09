@@ -19,9 +19,9 @@ void VoiceManager::setNumVoices(int n)
         Voice v;
         v.carrierPhase = 0.0f;
         v.modPhase = 0.0f;
-        v.frequency = 440.0f + i * 5.0f;
-        v.modFrequency = 220.0f;
-        v.modIndex = 50.0f;
+        v.frequency = 523.23f + i * 5.0f;
+        v.modFrequency = 2.0f + i;
+//        v.modIndex = 50.0f;
         voices.push_back(v);
     }
 }

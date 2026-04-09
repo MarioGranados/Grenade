@@ -16,7 +16,7 @@ struct Voice
     float modPhase;
     float frequency;
     float modFrequency;
-    float modIndex;
+//    float modIndex;
 };
 
 class VoiceManager
@@ -25,7 +25,10 @@ public:
     void setNumVoices(int n);
     void toggleVoices();
     std::vector<Voice>& getVoices() { return voices; }
+    void setModIndex(float modIndex) {this->modIndex = modIndex;}
+    float getModIndex(){return modIndex;}
 
 private:
     std::vector<Voice> voices;
+    float modIndex;
 };

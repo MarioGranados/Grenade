@@ -5,11 +5,12 @@ MainComponent::MainComponent():currentSampleRate(44100.0),
 phase(0.0f),
 amplitude(0.2f),
 phaseDelta(0.0f),
-frequency(440.0f),
-modFrequency(220.0f),
-modIndex(50.0f),
+frequency(523.23f), // C5 note
+modFrequency(0.0f),
+modIndex(0.0f),
 modPhase(0.0f),
-modPhaseDelta(0.0f)
+modPhaseDelta(0.0f),
+useFM(false)
 {
     // Make sure you set the size of the component after
     // you add any child components.
@@ -33,13 +34,26 @@ modPhaseDelta(0.0f)
     voicesAmountSlider.onValueChange = [this]() {
         handleVoicesAmount(voicesAmountSlider.getValue());
     };
+    
+    addAndMakeVisible(modulatorKnob);
+    modulatorKnob.setSliderStyle(juce::Slider::Rotary);
+    modulatorKnob.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
+    modulatorKnob.setRange(0.0, 50.0, 1.0);
+    modulatorKnob.setValue(0);
+    modulatorKnob.onValueChange = [this]() {
+        manager.setModIndex(modulatorKnob.getValue());
+    };
+    
+    addAndMakeVisible(useFmButton);
+    useFmButton.setButtonText("Use FM");
+    useFmButton.setClickingTogglesState(true);
+    useFmButton.onClick = [this](){
+        DBG("useFM is now: " + juce::String(useFM ? "true" : "false"));
+        useFM = useFmButton.getToggleState();
+    };
     //============================
     
-    addAndMakeVisible(toggleButton);
-    toggleButton.setButtonText("Click Me!");
-    toggleButton.onClick = [this](){
-        DBG("Clicked!");
-    };
+
     
     addAndMakeVisible(knob);
     knob.setSliderStyle(juce::Slider::Rotary);
@@ -92,7 +106,7 @@ modPhaseDelta(0.0f)
     else
     {
         // Specify the number of input and output channels that we want to open
-        setAudioChannels (2, 2);
+        setAudioChannels (0, 2);
     }
 }
 
@@ -156,37 +170,84 @@ void MainComponent::getNextAudioBlock (const juce::AudioSourceChannelInfo& buffe
 //        }
 //    }
 
-    std::vector<Voice>& voices = manager.getVoices();
+//    std::vector<Voice>& voices = manager.getVoices();
+//    
+//    
+//    for (int chan = 0; chan < bufferToFill.buffer->getNumChannels(); ++chan)
+//    {
+//        auto* channelData = bufferToFill.buffer->getWritePointer(chan, bufferToFill.startSample);
+//
+//        for (int i = 0; i < bufferToFill.numSamples; ++i)
+//        {
+//            float outputSample = 0.0f;
+//
+//            // loop through all voices
+//            for (Voice& v : voices)
+//            {
+//                float modulator = std::sin(v.modPhase);
+//                float sample;
+//                
+//                if(useFM) {
+//                    sample = std::sin(v.carrierPhase + manager.getModIndex() * modulator);
+//                } else {
+//                    sample = std::sin(v.carrierPhase);
+//                }
+//
+//                outputSample += sample;  // sum each voice
+//
+//                // increment phases
+//                v.carrierPhase += 2.0f * juce::MathConstants<float>::pi * v.frequency / currentSampleRate;
+//                v.modPhase += 2.0f * juce::MathConstants<float>::pi * v.modFrequency / currentSampleRate;
+//
+//                // wrap phases
+//                if (v.carrierPhase >= juce::MathConstants<float>::twoPi)
+//                    v.carrierPhase -= juce::MathConstants<float>::twoPi;
+//                if (v.modPhase >= juce::MathConstants<float>::twoPi)
+//                    v.modPhase -= juce::MathConstants<float>::twoPi;
+//            }
+//
+//            // scale amplitude to prevent clipping
+//            channelData[i] = (outputSample / voices.size()) * amplitude;
+//        }
+//    }
     
-    for (int chan = 0; chan < bufferToFill.buffer->getNumChannels(); ++chan)
+    auto* buffer = bufferToFill.buffer;
+    int numChannels = buffer->getNumChannels();
+    int numSamples = bufferToFill.numSamples;
+
+    std::vector<Voice>& voices = manager.getVoices();
+
+    for (int i = 0; i < numSamples; ++i)
     {
-        auto* channelData = bufferToFill.buffer->getWritePointer(chan, bufferToFill.startSample);
+        double outputSample = 0.0;
 
-        for (int i = 0; i < bufferToFill.numSamples; ++i)
+        // Process each voice
+        for (Voice& v : voices)
         {
-            float outputSample = 0.0f;
+            double modulator = std::sin(v.modPhase);
+            double sample = useFM ? std::sin(v.carrierPhase + manager.getModIndex() * modulator)
+                                  : std::sin(v.carrierPhase);
 
-            // loop through all voices
-            for (Voice& v : voices)
-            {
-                float modulator = std::sin(v.modPhase);
-                float sample = std::sin(v.carrierPhase + v.modIndex * modulator);
+            outputSample += sample;
 
-                outputSample += sample;  // sum each voice
+            // increment phases (double precision)
+            v.carrierPhase += 2.0 * juce::MathConstants<double>::pi * v.frequency / currentSampleRate;
+            v.modPhase += 2.0 * juce::MathConstants<double>::pi * v.modFrequency / currentSampleRate;
 
-                // increment phases
-                v.carrierPhase += 2.0f * juce::MathConstants<float>::pi * v.frequency / currentSampleRate;
-                v.modPhase += 2.0f * juce::MathConstants<float>::pi * v.modFrequency / currentSampleRate;
+            // wrap phases to 0..2pi
+            if (v.carrierPhase >= juce::MathConstants<double>::twoPi)
+                v.carrierPhase -= juce::MathConstants<double>::twoPi;
+            if (v.modPhase >= juce::MathConstants<double>::twoPi)
+                v.modPhase -= juce::MathConstants<double>::twoPi;
+        }
 
-                // wrap phases
-                if (v.carrierPhase >= juce::MathConstants<float>::twoPi)
-                    v.carrierPhase -= juce::MathConstants<float>::twoPi;
-                if (v.modPhase >= juce::MathConstants<float>::twoPi)
-                    v.modPhase -= juce::MathConstants<float>::twoPi;
-            }
+        // scale amplitude by number of voices
+        float finalSample = static_cast<float>((outputSample / voices.size()) * amplitude);
 
-            // scale amplitude to prevent clipping
-            channelData[i] = (outputSample / voices.size()) * amplitude;
+        // write same sample to all channels (stereo-safe)
+        for (int chan = 0; chan < numChannels; ++chan)
+        {
+            buffer->getWritePointer(chan, bufferToFill.startSample)[i] = finalSample;
         }
     }
 }
@@ -210,7 +271,7 @@ void MainComponent::paint (juce::Graphics& g)
 
 void MainComponent::resized()
 {
-    toggleButton.setBounds(30, 30, 150, 30);
+    useFmButton.setBounds(30, 30, 150, 30);
 
     slider.setBounds(30, 80, 300, 30);        // horizontal slider
 
@@ -222,7 +283,8 @@ void MainComponent::resized()
     volumeKnob.setBounds(350, 80, 50, 200);
     
     voicesAmountSlider.setBounds(250, 80, 50, 200);
-
+    
+    modulatorKnob.setBounds(400, 120, 100, 150);
     // This is called when the MainContentComponent is resized.
     // If you add any child components, this is where you should
     // update their positions.

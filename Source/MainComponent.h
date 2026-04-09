@@ -41,11 +41,12 @@ private:
     float modPhase;
     float modPhaseDelta;
     
+    bool useFM;
+    
     VoiceManager manager;
     
     //examples
     
-    juce::ToggleButton toggleButton;
     juce::Slider slider;
     juce::Slider knob;
     //examples end
@@ -56,6 +57,12 @@ private:
     juce::Slider sustainKnob;
     juce::Slider decayKnob;
     juce::Slider volumeKnob;
+    
+    juce::Slider modulatorKnob;
+    
+    juce::ToggleButton useFmButton;
+
+    
     //=======================main ends
     
     //===========FX
